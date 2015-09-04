@@ -1,0 +1,11 @@
+n = 500;
+p = 1000;
+k = 20;
+noise_scale = 1e-3;
+X = randn(n, p); X_norm = sqrt(sum(X.*X)); X = X./(X_norm*ones(p, 1));
+beta = randn(p, 1);
+beta(k+1:end) = 0;
+noise = randn(n, 1)*noise_scale;
+y = X*beta+noise;
+[beta_, theta_, A_rate] = Gap_Safe_Single(X, y, 1e-7, 0, 1e3, 1e-3, zeros(p, 1), zeros(n, 1));
+SE = norm(X*beta_-y, 2);
