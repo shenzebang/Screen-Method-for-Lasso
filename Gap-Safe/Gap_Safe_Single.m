@@ -23,17 +23,22 @@ dff = @(theta) .5*y_norm^2 - lambda^2*norm(theta-y/lambda, 2)^2;
 
 Active_Set = 1:p;
 for it = 1:maxit
+    if mod(it, 10) == 1
+        disp(it);
+        disp(ff(beta));
+    end
     if ff(beta) - dff(theta) < eps
         break;
     end
     residual = y - X*beta; v = max(abs(X'*residual)); 
     alpha = min(max(-1/v, y'*residual/lambda/norm(residual, 2)^2) ,1/v);
     theta = alpha * residual;
-    if f~=0 && mod(it, f) == 1
-        R_ = (y_norm^2-2*ff(beta))/lambda; R_ = max(R_, 0);
+    if f~=0 && mod(it, f) == 0
+        R_ = (y_norm^2-2*ff(beta)); R_ = max(R_, 0); R_ = sqrt(R_)/lambda;
         Active_Set = Gap_Safe_Screen(X, Active_Set, y/lambda, theta, beta, R_);
     end
     A_rate(it) = length(Active_Set)/p;
+    beta(Active_Set==0) = 0;
     for t = 1:length(Active_Set)
         idx = Active_Set(t);
         beta(idx) = Gap_Safe_Threshold(lambda/norm(X(:, idx), 2)^2, ...
