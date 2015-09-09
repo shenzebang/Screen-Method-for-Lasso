@@ -9,5 +9,5 @@ noise = randn(n, 1)*noise_scale;
 y = X*beta+noise;
 lambda = 5;
 theta = noise/lambda;
-[beta_, theta_, A_rate] = Gap_Safe_Single(X, y, 1e-7, 1, 1e2, lambda, zeros(p, 1), zeros(n, 1));
+[beta_, theta_, A_rate] = OD_Safe_Single(X, y, 1e-7, 1, 1e2, lambda, zeros(p, 1), zeros(n, 1));
 SE = norm(X*beta_-y, 2);

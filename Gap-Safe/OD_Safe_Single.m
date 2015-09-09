@@ -1,4 +1,4 @@
-function [beta, theta, A_rate] = Gap_Safe_Single(X, y, eps, f, maxit, lambda, beta_0, theta_0)
+function [beta, theta, A_rate] = OD_Safe_Single(X, y, eps, f, maxit, lambda, beta_0, theta_0)
 % [beta, theta, A_rate] = Gap_Safe_Single(X, y, eps, f, maxit, lambda, beta_0, theta_0)
 % input :
 % X : dictionary matrix
@@ -23,10 +23,10 @@ dff = @(theta) .5*y_norm^2 - lambda^2*norm(theta-y/lambda, 2)^2;
 
 Active_Set = 1:p;
 for it = 1:maxit
-%    if mod(it, 10) == 1
-%        disp(it);
-%        disp(ff(beta));
-%    end
+    if mod(it, 10) == 1
+        disp(it);
+        disp(ff(beta));
+    end
     if ff(beta) - dff(theta) < eps
         break;
     end
@@ -35,7 +35,7 @@ for it = 1:maxit
     theta = alpha * residual;
     if f~=0 && mod(it, f) == 0
         R_ = (y_norm^2-2*ff(beta)); R_ = max(R_, 0); R_ = sqrt(R_)/lambda;
-        Active_Set = Gap_Safe_Screen(X, Active_Set, y/lambda, theta, residual, R_);
+        Active_Set = OD_Safe_Screen(X, Active_Set, y/lambda, residual, beta, R_);
     end
     A_rate(it) = length(Active_Set)/p;
     beta(Active_Set==0) = 0;
