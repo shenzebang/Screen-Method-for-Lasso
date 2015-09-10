@@ -1,5 +1,5 @@
-function [beta, theta, A_rate, residual_record] = Greedy_Screen_Single(X, y, eps, f, maxit, lambda, beta_0, theta_0)
-% [beta, theta, A_rate] = Greedy_Screen_Single(X, y, eps, f, maxit, lambda, beta_0, theta_0)
+function [beta, theta, A_rate] = Greedy_Screen_Single_fast(X, y, eps, f, maxit, lambda, beta_0, theta_0)
+% [beta, theta, A_rate] = Greedy_Screen_Single_fast(X, y, eps, f, maxit, lambda, beta_0, theta_0)
 % input :
 % X : dictionary matrix
 % y : response vector
@@ -18,35 +18,26 @@ beta = beta_0;
 theta = theta_0;
 A_rate = ones(maxit, 1);
 y_norm = norm(y, 2);
+y_lambda = y/lambda;
 ff = @(beta) .5*norm(X*beta-y, 2)^2+lambda*norm(beta, 1); % primal objective
-dff = @(theta) .5*y_norm^2 - lambda^2*norm(theta-y/lambda, 2)^2;
+dff = @(theta) .5*y_norm^2 - lambda^2*norm(theta-y_lambda, 2)^2;
 
 Active_Set = (1:p)';
 Selected_Set = [];
-residual_record = zeros(n, maxit);
 for it = 1:maxit
-    if mod(it, 10) == 1
-        disp(it);
-        disp(ff(beta));
-    end
-    
-    if ff(beta) - dff(theta) < eps
-        break;
-    end
-    
+    disp(it);
     % screen
-    residual = y - X*beta; v = max(abs(X'*residual)); 
-    %
-     residual_record(:, it) = residual;
-    %
-    alpha = min(max(-1/v, y'*residual/lambda/norm(residual, 2)^2) ,1/v);
+    residual = y - X*beta;
+    y_r_lambda = y_lambda'*residual; % y'*residual/lambda
+    X_r = X(:, Active_Set)'*residual; 
+    residual_norm = norm(residual, 2);
+    v = max(abs(X_r)); 
+    alpha = min(max(-1/v, y_r_lambda/residual_norm^2) ,1/v);
     theta = alpha * residual;
-    if alpha == y'*residual/lambda/norm(residual, 2)^2
-        disp('bingo');
-    end
     if f~=0 && mod(it, f) == 0
-        R_ = (y_norm^2-2*ff(beta)); R_ = max(R_, 0); R_ = sqrt(R_)/lambda;
-        Active_Set = Greedy_Screen(X, Active_Set, y/lambda, theta, residual, R_);
+        R_ = (y_norm^2-residual_norm^2-norm(beta, 1)*lambda*2); R_ = max(R_, 0); R_ = sqrt(R_)/lambda;
+        Active_Idx = Greedy_Screen_fast(X_r, residual_norm, y_r_lambda, y_norm, alpha, R_);
+        Active_Set = Active_Set(Active_Idx);
     end
     A_rate(it) = length(Active_Set)/p;
     beta(Active_Set==0) = 0;
